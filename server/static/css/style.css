@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,300,700");
+
+
+body, html {
+    width: 100%;
+    height: 100%;
+    background: #110E19;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.navbar-brand {
+    font-family: 'ZCOOL QingKe HuangYou', cursive;
+    font-size: 18px;
+    font-weight: 300;
+    padding: 15px 15px;
+}
+
+.logo {
+    height: 30px;
+}
+
+
+body > div > div.search-results{
+	position: absolute;
+}
+
+body > div > div.search-results > p{
+	font-family: 'ZCOOL QingKe HuangYou', cursive;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+
+.table{
+  display:block;
+  overflow:auto;
+  height:500px;
+  width:100%;
+}
+
+.table td {
+	background:#ffffff;
+    font-size: 14px;
+    padding: 0.65rem 0.75rem;
+}
+
+textarea {
+    resize: none;
+}
+
+#text-with-flags {
+    height: 80px;
+}
+
+canvas {
+    position:absolute;
+    top:0;
+    left:0
+}
