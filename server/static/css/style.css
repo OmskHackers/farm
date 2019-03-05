@@ -32,6 +32,13 @@ body > div > div.search-results > p{
     color: #ffffff;
 }
 
+.table{
+  display:block;
+  overflow:auto;
+  height:450px;
+  width:100%;
+}
+
 .table td {
 	background:#ffffff;
     font-size: 14px;
