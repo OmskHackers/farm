@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="/static/favicon.png">
+
+    <title>Farm Server</title>
+
+    <link href="/static/css/bootswatch-flatly.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|ZCOOL+QingKe+HuangYou" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+
+
+<script src="/static/js/moment.min.js"></script>
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/Chart.min.js"></script>
+
+</head>
+
+<body>
+<canvas id="bgCanvas"></canvas>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark py-0">
+    <img class="logo" src="/static/img/dvteam_white.png">
+    <div class="navbar-brand">Destructive Farm customized by lucky624</div>
+</nav>
+
+<div class="container mt-4">
+
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card border-light">
+                <div class="card-body">
+                    <h4 class="card-title">Show Flags</h4>
+                    <form id="show-flags-form">
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <label for="sploit-select">Sploit</label>
+                                <select class="form-control form-control-sm" id="sploit-select" name="sploit">
+                                    <option value="">All</option>
+                                    {% for item in distinct_values['sploit'] %}
+                                    <option>{{ item }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="team-select">Team</label>
+                                <select class="form-control form-control-sm" id="team-select" name="team">
+                                    <option value="">All</option>
+                                    {% for item in distinct_values['team'] %}
+                                    <option>{{ item }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="flag-input">
+                                    Flag
+                                    <small class="text-muted ml-2">substring, case-insensitive</small>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="flag-input" name="flag">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="time-since-input">
+                                    Since
+                                    <small class="text-muted ml-2">{{ server_tz_name }}</small>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="time-since-input"
+                                       name="time-since"
+                                       placeholder="yyyy-mm-dd hh:mm">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="time-until-input">
+                                    Until
+                                    <small class="text-muted ml-2">{{ server_tz_name }}</small>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="time-until-input"
+                                       name="time-until"
+                                       placeholder="yyyy-mm-dd hh:mm">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="status-select">Status</label>
+                                <select class="form-control form-control-sm" id="status-select" name="status">
+                                    <option value="">All</option>
+                                    {% for item in distinct_values['status'] %}
+                                    <option>{{ item }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="checksystem-response-input">
+                                    Checksystem response
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="checksystem-response-input"
+                                       name="checksystem_response">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-sm submit-btn">Show</button>
+                            </div>
+                        </div>
+                        <input type="hidden" value="1" id="page-number" name="page-number">
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-light">
+                <div class="card-body">
+                    <h4 class="card-title">Add Flags Manually</h4>
+                    <form id="post-flags-manual-form">
+                        <label for="text-with-flags">
+                            Text with flags
+                            <small class="text-muted ml-2">flag format: {{ flag_format }}</small>
+                        </label>
+                        <textarea class="form-control form-control-sm mb-3" id="text-with-flags" name="text"></textarea>
+                        <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3 text-center query-status"></div>
+
+    <div class="search-results" style="display: none;">
+        <p>Found <span class="total-count"></span> flags</p>
+
+        <ul class="pagination pagination-sm"></ul>
+
+        <table class="table table-hover">
+            <thead>
+            <tr class="table-secondary">
+                <th scope="col">Sploit</th>
+                <th scope="col">Team</th>
+                <th scope="col">Flag</th>
+                <th scope="col">Time</th>
+                <th scope="col">Status</th>
+                <th scope="col">Checksystem Response</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+<br><br><br>
+    <div id="statistics">
+        
+
+<canvas id="myChart" width="800" height="400"></canvas>
+
+
+<script type="text/javascript">
+
+Chart.defaults.global.responsive = false;
+
+
+var timeFormat = 'hh:mm:ss';
+ 
+function newDateString(hours, minutes, seconds) {
+  return moment().hour(hours).minute(minutes).second(seconds).format(timeFormat);
+}
+
+var chartData = {
+labels : [{% for item in labels %}
+"{{item}}",
+{% endfor %}],
+
+
+datasets : [{
+label: '{{ legend }}',
+fill: true,
+lineTension: 0.1,
+backgroundColor: "rgba(75,192,192,0.4)",
+borderColor: "rgba(75,192,192,1)",
+borderCapStyle: 'butt',
+borderDash: [],
+borderDashOffset: 0.0,
+borderJoinStyle: 'miter',
+pointBorderColor: "rgba(75,192,192,1)",
+pointBackgroundColor: "#fff",
+pointBorderWidth: 1,
+pointHoverRadius: 5,
+pointHoverBackgroundColor: "rgba(75,192,192,1)",
+pointHoverBorderColor: "rgba(220,220,220,1)",
+pointHoverBorderWidth: 2,
+pointRadius: 1,
+pointHitRadius: 10,
+data : [{% for item in values %}
+{{item}},
+{% endfor %}],
+spanGaps: false
+}   ]
+}
+
+
+
+// get chart canvas
+var ctx = document.getElementById("myChart").getContext("2d");
+
+// create the chart using the chart canvas
+var myChart = new Chart(ctx, {
+  type: 'line',
+  data: chartData,
+  options: {
+    tooltips: {
+      enabled: true,
+      mode: 'single',
+      callbacks: {
+        label: function(tooltipItems, data) {
+                 return tooltipItems.yLabel + ' flags';
+               }
+      }
+    },
+  }
+});
+
+// get chart canvas
+var holder = document.getElementById("myChart");
+
+// get the text element below the chart
+var pointSelected = document.getElementById("pointSelected");
+
+// create a callback function for updating the selected index on the chart
+holder.onclick = function(evt){
+  var activePoint = myChart.getElementAtEvent(evt);
+ pointSelected.innerHTML = 'Point selected... index: ' + activePoint[0]._index;
+};
+
+
+$(document).ready(function () {
+var interval = {{refresh_interval}}; 
+var jsno_string = ''
+var Update = function(){
+$.ajax({
+  url: '/api/get_statistics',
+  dataType: 'json',
+  data: jsno_string,
+  success: function(response) {
+if(response['six_flags'] >= 0 && response['one_flags'] <= -1 && response['two_flags'] <= -1 && response['three_flags'] <= -1 && response['four_flags'] <= -1 && response['five_flags'] <= -1){
+       var NewChartData = {
+labels : [
+response['six_time'],
+
+],
+
+
+datasets : [{
+label: 'Flag delivery statistics',
+fill: true,
+lineTension: 0.1,
+backgroundColor: "rgba(75,192,192,0.4)",
+borderColor: "rgba(75,192,192,1)",
+borderCapStyle: 'butt',
+borderDash: [],
+borderDashOffset: 0.0,
+borderJoinStyle: 'miter',
+pointBorderColor: "rgba(75,192,192,1)",
+pointBackgroundColor: "#fff",
+pointBorderWidth: 1,
+pointHoverRadius: 5,
+pointHoverBackgroundColor: "rgba(75,192,192,1)",
+pointHoverBorderColor: "rgba(220,220,220,1)",
+pointHoverBorderWidth: 2,
+pointRadius: 1,
+pointHitRadius: 10,
+
+data : [
+response['six_flags'],
+],
+
+
+spanGaps: false
+}   ]
+} 
+
+
+}
+else if (response['five_flags'] >= 0 && response['one_flags'] <= -1 && response['two_flags'] <= -1 && response['three_flags'] <= -1 && response['four_flags'] <= -1 && response['six_flags'] >= 0)
+
+{
+
+
+
+var NewChartData = {
+labels : [
+response['five_time'],
+
+response['six_time'],
+],
+
+
+datasets : [{
+label: 'Flag delivery statistics',
+fill: true,
+lineTension: 0.1,
+backgroundColor: "rgba(75,192,192,0.4)",
+borderColor: "rgba(75,192,192,1)",
+borderCapStyle: 'butt',
+borderDash: [],
+borderDashOffset: 0.0,
+borderJoinStyle: 'miter',
+pointBorderColor: "rgba(75,192,192,1)",
+pointBackgroundColor: "#fff",
+pointBorderWidth: 1,
+pointHoverRadius: 5,
+pointHoverBackgroundColor: "rgba(75,192,192,1)",
+pointHoverBorderColor: "rgba(220,220,220,1)",
+pointHoverBorderWidth: 2,
+pointRadius: 1,
+pointHitRadius: 10,
+
+data : [
+response['five_flags'],
+
+response['six_flags'],
+
+],
+
+
+spanGaps: false
+}   ]
+} 
+
+
+
+}
+else if(response['five_flags'] >= 0 && response['one_flags'] == -1 && response['two_flags'] == -1 && response['three_flags'] == -1 && response['four_flags'] >= 0 && response['six_flags'] >= 0)
+{
+
+
+
+var NewChartData = {
+labels : [
+response['four_time'],
+
+response['five_time'],
+
+response['six_time'],
+
+],
+
+
+datasets : [{
+label: 'Flag delivery statistics',
+fill: true,
+lineTension: 0.1,
+backgroundColor: "rgba(75,192,192,0.4)",
+borderColor: "rgba(75,192,192,1)",
+borderCapStyle: 'butt',
+borderDash: [],
+borderDashOffset: 0.0,
+borderJoinStyle: 'miter',
+pointBorderColor: "rgba(75,192,192,1)",
+pointBackgroundColor: "#fff",
+pointBorderWidth: 1,
+pointHoverRadius: 5,
+pointHoverBackgroundColor: "rgba(75,192,192,1)",
+pointHoverBorderColor: "rgba(220,220,220,1)",
+pointHoverBorderWidth: 2,
+pointRadius: 1,
+pointHitRadius: 10,
+
+data : [
+response['four_flags'],
+
+response['five_flags'],
+
+response['six_flags'],
+
+],
+
+
+spanGaps: false
+}   ]
+} 
+
+
+
+}
+else if (response['five_flags'] >= 0 && response['one_flags'] <= -1 && response['two_flags'] <= -1 && response['three_flags'] >= 0 && response['four_flags'] >= 0 && response['six_flags'] >= 0)
+{
+
+
+
+var NewChartData = {
+labels : [
+response['three_time'],
+
+response['four_time'],
+
+response['five_time'],
+
+response['six_time'],
+
+],
+
+
+datasets : [{
+label: 'Flag delivery statistics',
+fill: true,
+lineTension: 0.1,
+backgroundColor: "rgba(75,192,192,0.4)",
+borderColor: "rgba(75,192,192,1)",
+borderCapStyle: 'butt',
+borderDash: [],
+borderDashOffset: 0.0,
+borderJoinStyle: 'miter',
+pointBorderColor: "rgba(75,192,192,1)",
+pointBackgroundColor: "#fff",
+pointBorderWidth: 1,
+pointHoverRadius: 5,
+pointHoverBackgroundColor: "rgba(75,192,192,1)",
+pointHoverBorderColor: "rgba(220,220,220,1)",
+pointHoverBorderWidth: 2,
+pointRadius: 1,
+pointHitRadius: 10,
+
+data : [
+response['three_flags'],
+
+response['four_flags'],
+
+response['five_flags'],
+
+response['six_flags'],
+
+],
+
+
+spanGaps: false
+}   ]
+} 
+
+
+
+}
+else if(response['five_flags'] >= 0 && response['one_flags'] <= -1 && response['two_flags'] >= 0 && response['three_flags'] >= 0 && response['four_flags'] >= 0 && response['six_flags'] >= 0)
+{
+
+
+
+var NewChartData = {
+labels : [
+response['two_time'],
+
+response['three_time'],
+
+response['four_time'],
+
+response['five_time'],
+
+response['six_time'],
+
+],
+
+
+datasets : [{
+label: 'Flag delivery statistics',
+fill: true,
+lineTension: 0.1,
+backgroundColor: "rgba(75,192,192,0.4)",
+borderColor: "rgba(75,192,192,1)",
+borderCapStyle: 'butt',
+borderDash: [],
+borderDashOffset: 0.0,
+borderJoinStyle: 'miter',
+pointBorderColor: "rgba(75,192,192,1)",
+pointBackgroundColor: "#fff",
+pointBorderWidth: 1,
+pointHoverRadius: 5,
+pointHoverBackgroundColor: "rgba(75,192,192,1)",
+pointHoverBorderColor: "rgba(220,220,220,1)",
+pointHoverBorderWidth: 2,
+pointRadius: 1,
+pointHitRadius: 10,
+
+data : [
+
+response['two_flags'],
+
+response['three_flags'],
+
+response['four_flags'],
+
+response['five_flags'],
+
+response['six_flags'],
+
+],
+
+
+spanGaps: false
+}   ]
+} 
+
+
+
+}
+
+
+else
+{
+
+
+
+
+var NewChartData = {
+labels : [
+response['one_time'],
+
+response['two_time'],
+
+response['three_time'],
+
+response['four_time'],
+
+response['five_time'],
+
+response['six_time'],
+
+],
+
+
+
+datasets : [{
+label: 'Flag delivery statistics',
+fill: true,
+lineTension: 0.1,
+backgroundColor: "rgba(75,192,192,0.4)",
+borderColor: "rgba(75,192,192,1)",
+borderCapStyle: 'butt',
+borderDash: [],
+borderDashOffset: 0.0,
+borderJoinStyle: 'miter',
+pointBorderColor: "rgba(75,192,192,1)",
+pointBackgroundColor: "#fff",
+pointBorderWidth: 1,
+pointHoverRadius: 5,
+pointHoverBackgroundColor: "rgba(75,192,192,1)",
+pointHoverBorderColor: "rgba(220,220,220,1)",
+pointHoverBorderWidth: 2,
+pointRadius: 1,
+pointHitRadius: 10,
+
+data : [
+response['one_flags'],
+
+response['two_flags'],
+
+response['three_flags'],
+
+response['four_flags'],
+
+response['five_flags'],
+
+response['six_flags'],
+
+],
+
+
+spanGaps: false
+}   ]
+} 
+
+
+}
+    
+
+myChart.data.datasets = NewChartData.datasets;
+myChart.data.labels = NewChartData.labels;
+myChart.update();
+setTimeout(function() {
+                    Update();
+                }, interval);
+
+  },
+  error: function(error) {
+    console.log(error);
+  }
+
+
+});
+
+};
+
+Update();
+});
+
+</script>
+
+
+
+
+
+    </div>
+</div>
+
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/ui.js"></script>
+
+
+
+</body>
+</html>
