@@ -19,7 +19,7 @@ CONFIG = {
 
     'SUBMIT_FLAG_LIMIT': 50,
     'SUBMIT_PERIOD': 5,
-    'FLAG_LIFETIME': 5,
+    'FLAG_LIFETIME': 3600, #seconds
 
 
     'SERVER_IP': '0.0.0.0',
