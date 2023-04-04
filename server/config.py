@@ -22,8 +22,8 @@ CONFIG = {
     'FLAG_LIFETIME': 3600, #seconds
 
 
-    'SERVER_IP': '0.0.0.0',
-    'SERVER_PASSWORD': '1234',
+    'SERVER_IP': '172.17.0.2',
+    'SERVER_PASSWORD': '123',
 
 
 
@@ -32,11 +32,6 @@ CONFIG = {
     'API_TOKEN': '00000000000000000000',
 
 
-    #START_TIME - print(datetime.now())
     'GRAPHICS_REFRESH_INTERVAL': 10,        #Seconds
-    'START_TIME':'2019-04-06 16:04:00',
     'ROUND_PERIOD': 60                      #Seconds
-
-
-
 }

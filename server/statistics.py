@@ -1,10 +1,12 @@
 import json
 import os
 import sqlite3
+import re
 from time import sleep
 from datetime import datetime, timedelta
 
 from server import reloader
+from server.config import CONFIG
 
 
 
@@ -185,6 +187,16 @@ def query(sql, args=()):
 db_filename = os.path.join(os.path.dirname(__file__), 'flags.sqlite')
 
 def start_loop():
+    if 'START_TIME' not in CONFIG:
+        CONFIG['START_TIME'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+        with open('config.py', 'r') as f:
+            content = f.read()
+
+        content = re.sub(r'CONFIG\s*=\s*{', f"CONFIG = {{\n    'START_TIME': '{CONFIG['START_TIME']}',", content)
+
+        with open('config.py', 'w') as f:
+            f.write(content)
 
     print('Statistics')
     config = reloader.get_config()
