@@ -230,7 +230,7 @@ def start_loop():
         flags_sum = 0
         flags_sums = []
 
-        for loop in range(0,400):
+        for loop in range(0,720):
             time_points.append(point)
             try:
                 for index in range(0,flags.__len__()):
