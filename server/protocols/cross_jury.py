@@ -1,5 +1,5 @@
-import subprocess, random, time
-
+import random, time
+import requests
 from server import app
 from server.models import FlagStatus, SubmitResult
 
@@ -14,23 +14,25 @@ RESPONSES = {
 
 def submit_flags(flags, config):
     for item in flags:
-        # специально для волга кызыф 
-        # time.sleep(random.randint(0,3))
+        headers = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+        }
 
-        # тут надо поменять curl
+        json_data = {
+        'flag': item.flag,
+        'token': 'da8b38f9e9102be5',
+        }
 
-             #'''curl http://10.0.0.2/api/flag/v1/submit -H "Content-Type: text/plain" -d "{}"'''.format(item.flag) волга цтф
+        response = requests.post('http://95.217.236.0:8080/flag', headers=headers, json=json_data)
 
-        cmd = '''curl -s -H 'X-Team-Token: <your_secret_token>' -X PUT --data ["{}"] https://REDACTED/flags'''.format(item.flag)
-
-        output = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,shell=True, universal_newlines=True)
-        message = output.stdout.read()
-        output.terminate()
-        
         unknown_responses = set()
+        message = response.text
         response_lower = message.lower()
+
         for status, substrings in RESPONSES.items():
             if any(s in response_lower for s in substrings):
+                app.logger.warning('s %s', response_lower)
                 found_status = status
                 break
         else:
@@ -39,6 +41,5 @@ def submit_flags(flags, config):
                 unknown_responses.add(message)
                 app.logger.warning('Unknown checksystem response (flag will be resent): %s', message)
 
-        yield SubmitResult(item['flag'], found_status, message)
-
+        yield SubmitResult(item.flag, found_status, message)
         
