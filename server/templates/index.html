@@ -128,30 +128,33 @@
 
     <div class="mb-3 text-center query-status"></div>
 
-    <div class="search-results" style="display: none;">
-        <p>Found <span class="total-count"></span> flags</p>
+    <div class="stat-container">
+        <div id="mychart-container">
+            <canvas id="myChart" height="350" width="550"></canvas>
+        </div>
 
-        <ul class="pagination pagination-sm"></ul>
+        <div class="search-results" style="display: none;">
+            <p>Found <span class="total-count"></span> flags</p>
 
-        <table class="table table-hover">
-            <thead>
-            <tr class="table-secondary">
-                <th scope="col">Sploit</th>
-                <th scope="col">Team</th>
-                <th scope="col">Flag</th>
-                <th scope="col">Time</th>
-                <th scope="col">Status</th>
-                <th scope="col">Checksystem Response</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+            <ul class="pagination pagination-sm"></ul>
+
+            <table class="table table-hover">
+                <thead>
+                <tr class="table-secondary">
+                    <th scope="col">Sploit</th>
+                    <th scope="col">Team</th>
+                    <th scope="col">Flag</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Checksystem Response</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 <br><br><br>
-    <div id="statistics">
-        
 
-<canvas id="myChart" width="800" height="400"></canvas>
 
 
 <script type="text/javascript">
